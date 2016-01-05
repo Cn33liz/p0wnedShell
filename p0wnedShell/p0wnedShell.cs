@@ -45,6 +45,8 @@ using System.Configuration.Install;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.DirectoryServices.ActiveDirectory;
+using WUApiLib;
+using System.Globalization;
 
 //Add For PowerShell Invocation
 using System.Collections.ObjectModel;
@@ -70,8 +72,18 @@ namespace p0wnedShell
         }
     }
 
+    class MenuItem
+    {
+        public int Location { get; set; } //-1 disabled, 0 menu description, 1 menu item
+        public string Description { get; set; }
+        public string Function { get; set; }
+        public string Parameter { get; set; }
+    }
+
     class Program
     {
+        public static Dictionary<int, string> menuToFunctions = new Dictionary<int, string>();
+
         public static void PrintBanner(string[] toPrint = null)
         {
             Console.Clear();
@@ -126,7 +138,7 @@ namespace p0wnedShell
             HttpWebRequest myWebRequest = (HttpWebRequest)WebRequest.Create(url);
 
             // Obtain the 'Proxy' of the  Default browser.  
-            IWebProxy proxy = myWebRequest.Proxy;
+            System.Net.IWebProxy proxy = myWebRequest.Proxy;
             // Print the Proxy Url to the console.
 
             string ProxyURL = proxy.GetProxy(myWebRequest.RequestUri).ToString();
@@ -140,7 +152,6 @@ namespace p0wnedShell
                 return null;
             }
         }
-
 
         public static string ReadPassword()
         {
@@ -176,59 +187,156 @@ namespace p0wnedShell
             return password;
         }
 
-
-        public static int DisplayMenu()
+        public static int DisplayMeny()
         {
+            //define menu
+            List<MenuItem> MenuList = new List<MenuItem>();
+            MenuList.Add(new MenuItem
+            {
+                Location = 0,
+                Description = "Information Gathering:",
+                Function = null
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Use PowerView to gain network situational awareness on Windows Domains.",
+                Function = "PowerView"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Scan for IP-Addresses, HostNames and open Ports in your Network.",
+                Function = "PortScan"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 0,
+                Description = "Code Execution:",
+                Function = null
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Reflectively load Mimikatz executable into Memory, bypassing AV / AppLocker.",
+                Function = "MimiShell"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Inject Metasploit reversed https Shellcode into Memory.",
+                Function = "Meterpreter"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 0,
+                Description = "Privilege Escalation:",
+                Function = null
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Use PowerUp tool to assist with local privilege escalation on Windows Systems.",
+                Function = "PowerUp"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Use Mimikatz dcsync to collect NTLM hashes from the Domain.",
+                Function = "DCSync"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Use Mimikatz to generate a Golden Ticket for the Domain.",
+                Function = "GoldenTicket"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 0,
+                Description = "Exploitation:",
+                Function = null
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Own AD in 60 seconds using the MS14-068 Kerberos Vulnerability.",
+                Function = "MS14_068"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 0,
+                Description = "Lateral Movement:",
+                Function = null
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Use PsExec to execute commands on remote system.",
+                Function = "PsExec"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Execute Mimikatz on a remote computer to dump credentials.",
+                Function = "Remote_Mimikatz"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "PowerCat our PowerShell TCP/IP Swiss Army Knife.",
+                Function = "PowerMenu"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 0,
+                Description = "Others:",
+                Function = null
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Execute PowerShell Commands (Including PowerSploit and Veil's PowerTools Post Exploitation Modules).",
+                Function = "InvokeShell"
+            });
+            MenuList.Add(new MenuItem
+            {
+                Location = 1,
+                Description = "Reflectively load a ReactOS Command shell into Memory, bypassing AV/AppLocker.",
+                Function = "ReactShell"
+            });
+
+
             string[] toPrint = { "* PowerShell Runspace Post Exploitation Toolkit                     *",
                                  "* For Bitch Ass Admins that try to block our PowerShell candy ;)    *",
                                  "*                                                                   *" };
             Program.PrintBanner(toPrint);
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("[*] Information Gathering:\n");
-            Console.ResetColor();
-            Console.WriteLine(" 1. Use PowerView to gain network situational awareness on Windows Domains.");
-            Console.WriteLine();
-            Console.WriteLine(" 2. Scan for IP-Addresses, HostNames and open Ports in your Network.");
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("[*] Code Execution:\n");
-            Console.ResetColor();
-            Console.WriteLine(" 3. Reflectively load Mimikatz executable into Memory, bypassing AV/AppLocker.");
-            Console.WriteLine();
-            Console.WriteLine(" 4. Inject Metasploit reversed https Shellcode into Memory.");
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("[*] Privilege Escalation:\n");
-            Console.ResetColor();
-            Console.WriteLine(" 5. Use PowerUp tool to assist with local privilege escalation on Windows Systems.");
-            Console.WriteLine();
-            Console.WriteLine(" 6. Use Mimikatz dcsync to collect NTLM hashes from the Domain.");
-            Console.WriteLine();
-            Console.WriteLine(" 7. Use Mimikatz to generate a Golden Ticket for the Domain.");
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("[*] Exploitation:\n");
-            Console.ResetColor();
-            Console.WriteLine(" 8. Own AD in 60 seconds using the MS14-068 Kerberos Vulnerability.");
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("[*] Lateral Movement:\n");
-            Console.ResetColor();
-            Console.WriteLine(" 9. Use PsExec to execute commands on remote system.");
-            Console.WriteLine();
-            Console.WriteLine(" 10. Execute Mimikatz on a remote computer to dump credentials.");
-            Console.WriteLine();
-            Console.WriteLine(" 11. PowerCat our PowerShell TCP/IP Swiss Army Knife.");
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("[*] Others:\n");
-            Console.ResetColor();
-            Console.WriteLine(" 12. Execute PowerShell Commands (Including PowerSploit and Veil's PowerTools Post Exploitation Modules).");
-            Console.WriteLine();
-            Console.WriteLine(" 13. Reflectively load a ReactOS Command shell into Memory, bypassing AV/AppLocker.");
-            Console.WriteLine();
-            Console.WriteLine("\n 14. Exit");
+
+            //generate menu
+            int i = 1;
+            foreach (MenuItem item in MenuList)
+            {
+                if (item.Location == 0)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("[*] " + item.Description + "\n");
+                    Console.ResetColor();
+                }
+                else if (item.Location == 1)
+                {
+                    if (!string.IsNullOrEmpty(item.Function))
+                    {
+                        menuToFunctions[i] = item.Function;
+                    }
+                    Console.WriteLine(" " + i + ". " + item.Description);
+                    Console.WriteLine();
+                    i++;
+                }
+            }
+
+            Console.WriteLine("\n " + i + ". Exit");
             Console.Write("\nEnter choice: ");
+
             var result = Console.ReadLine();
 
             try
@@ -241,142 +349,39 @@ namespace p0wnedShell
             }
         }
 
+        static void CallFunc(string mymethod)
+        {
+            // Get a type from the string 
+            Type type = typeof(Pshell);
+
+            // Retrieve the method you are looking for
+            MethodInfo methodInfo = type.GetMethod(mymethod);
+
+            // Invoke the method on the type
+            methodInfo.Invoke(null, null);
+        }
+
         public static void Main()
         {
             Console.Title = "p0wnedShell - PowerShell Runspace Post Exploitation Toolkit";
             Console.SetWindowSize(Math.Min(120, Console.LargestWindowWidth), Math.Min(65, Console.LargestWindowHeight));
-            string Arch = System.Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE");
             int userInput = 0;
 
             do
             {
-                userInput = DisplayMenu();
-                switch (userInput)
+                userInput = DisplayMeny();
+                if (menuToFunctions.ContainsKey(userInput))
                 {
-                    case 1:
-                        Pshell.PowerView();
-                        break;
-                    case 2:
-                        Pshell.PortScan();
-                        break;
-                    case 3:
-                        if (Arch == "AMD64")
-                        {
-                            Pshell.MimiShell();
-                        }
-                        else
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx64\n");
-                            Console.ResetColor();
-                            Console.WriteLine("Press Enter to Continue...");
-                            Console.ReadLine();
-                        }
-                        break;
-                    case 4:
-                        if (Arch == "x86")
-                        {
-                            Pshell.Meterpreter();
-                        }
-                        else
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx86\n");
-                            Console.ResetColor();
-                            Console.WriteLine("Press Enter to Continue...");
-                            Console.ReadLine();
-                        }
-                        break;
-                    case 5:
-                        Pshell.PowerUp();
-                        break;
-                    case 6:
-                        if (Arch == "AMD64")
-                        {
-                            Pshell.DCSync();
-                        }
-                        else
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx64\n");
-                            Console.ResetColor();
-                            Console.WriteLine("Press Enter to Continue...");
-                            Console.ReadLine();
-                        }
-                        break;
-                    case 7:
-                        if (Arch == "AMD64")
-                        {
-                            Pshell.GoldenTicket();
-                        }
-                        else
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx64\n");
-                            Console.ResetColor();
-                            Console.WriteLine("Press Enter to Continue...");
-                            Console.ReadLine();
-                        }
-                        break;
-                    case 8:
-                        if (Arch == "x86")
-                        {
-                            Pshell.MS14_068();
-                        }
-                        else
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx86\n");
-                            Console.ResetColor();
-                            Console.WriteLine("Press Enter to Continue...");
-                            Console.ReadLine();
-                        }
-                        break;
-                    case 9:
-                        if (Arch == "x86")
-                        {
-                            Pshell.PsExec();
-                        }
-                        else
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx86\n");
-                            Console.ResetColor();
-                            Console.WriteLine("Press Enter to Continue...");
-                            Console.ReadLine();
-                        }
-                        break;
-                    case 10:
-                        Pshell.Remote_Mimikatz();
-                        break;
-                    case 11:
-                        PowerCat.PowerMenu();
-                        break;
-                    case 12:
-                        Pshell.InvokeShell();
-                        break;
-                    case 13:
-                        if (Arch == "x86")
-                        {
-                            Pshell.ReactShell();
-                        }
-                        else
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx86\n");
-                            Console.ResetColor();
-                            Console.WriteLine("Press Enter to Continue...");
-                            Console.ReadLine();
-                        }
-                        break;
-                    default:
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("\nSee you later Alligator ;)");
-                        Console.ResetColor();
-                        break;
+                    CallFunc(menuToFunctions[userInput]);
+                }
+                else if (userInput == (menuToFunctions.Count + 1))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\nSee you later Alligator ;)");
+                    Console.ResetColor();
                 }
 
-            } while (userInput != 14);
+            } while (userInput != (menuToFunctions.Count + 1));
         }
     }
 
@@ -416,6 +421,16 @@ namespace p0wnedShell
 
         public static void MimiShell()
         {
+            if (!EnvironmentHelper.Is64BitProcess())
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx64\n");
+                Console.ResetColor();
+                Console.WriteLine("Press Enter to Continue...");
+                Console.ReadLine();
+                return;
+            }
+
             string[] toPrint = { "* Inject Mimikatz Binary into memory using ReflectivePEInjection    *" };
             Program.PrintBanner(toPrint);
 
@@ -435,6 +450,16 @@ namespace p0wnedShell
 
         public static void DCSync()
         {
+            if (!EnvironmentHelper.Is64BitProcess())
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx64\n");
+                Console.ResetColor();
+                Console.WriteLine("Press Enter to Continue...");
+                Console.ReadLine();
+                return;
+            }
+
             string[] toPrint = { "* Use Mimikatz dcsync to collect NTLM hashes from the Domain        *" };
             Program.PrintBanner(toPrint);
 
@@ -494,6 +519,16 @@ namespace p0wnedShell
 
         public static void GoldenTicket()
         {
+            if (!EnvironmentHelper.Is64BitProcess())
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx64\n");
+                Console.ResetColor();
+                Console.WriteLine("Press Enter to Continue...");
+                Console.ReadLine();
+                return;
+            }
+
             string[] toPrint = { "* Use Mimikatz to generate a Golden Ticket for the Domain           *" };
             Program.PrintBanner(toPrint);
 
@@ -652,6 +687,16 @@ namespace p0wnedShell
 
         public static void MS14_068()
         {
+            if (EnvironmentHelper.Is64BitProcess())
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx86\n");
+                Console.ResetColor();
+                Console.WriteLine("Press Enter to Continue...");
+                Console.ReadLine();
+                return;
+            }
+
             string[] toPrint = { "* Own AD in 60 seconds using the MS14-068 Kerberos Vulnerability    *" };
             Program.PrintBanner(toPrint);
 
@@ -777,6 +822,16 @@ namespace p0wnedShell
 
         public static void Meterpreter()
         {
+            if (EnvironmentHelper.Is64BitProcess())
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx86\n");
+                Console.ResetColor();
+                Console.WriteLine("Press Enter to Continue...");
+                Console.ReadLine();
+                return;
+            }
+
             string[] toPrint = { "* Inject Metasploit reversed https Shellcode into Memory            *" };
             Program.PrintBanner(toPrint);
 
@@ -1110,6 +1165,16 @@ namespace p0wnedShell
 
         public static void PsExec()
         {
+            if (EnvironmentHelper.Is64BitProcess())
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx86\n");
+                Console.ResetColor();
+                Console.WriteLine("Press Enter to Continue...");
+                Console.ReadLine();
+                return;
+            }
+
             string[] toPrint = { "* Use PsExec to execute commands on remote system.                  *" };
             Program.PrintBanner(toPrint);
 
@@ -1223,6 +1288,16 @@ namespace p0wnedShell
 
         public static void ReactShell()
         {
+            if (EnvironmentHelper.Is64BitProcess())
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\n[+] Sorry this option only works for p0wnedShellx86\n");
+                Console.ResetColor();
+                Console.WriteLine("Press Enter to Continue...");
+                Console.ReadLine();
+                return;
+            }
+
             Console.Clear();
             Console.Write("[+] Please wait until loaded...\n");
             Console.WriteLine();
@@ -1372,6 +1447,101 @@ namespace p0wnedShell
             PowerShell ps = PowerShell.Create();
             ps.AddScript(script).Invoke();
         }
+
+        public static void PowerMenu()
+        {
+            PowerCat.PowerMenu();
+        }
     }
 
+    public static class EnvironmentHelper
+    {
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetCurrentProcess();
+
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetModuleHandle(string moduleName);
+
+        [DllImport("kernel32")]
+        static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
+        [DllImport("kernel32.dll")]
+        static extern bool IsWow64Process(IntPtr hProcess, out bool wow64Process);
+
+        public static bool Is64BitOperatingSystem()
+        {
+            // Check if this process is natively an x64 process. If it is, it will only run on x64 environments, thus, the environment must be x64.
+            if (Is64BitProcess())
+                return true;
+            // Check if this process is an x86 process running on an x64 environment.
+            IntPtr moduleHandle = GetModuleHandle("kernel32");
+            if (moduleHandle != IntPtr.Zero)
+            {
+                IntPtr processAddress = GetProcAddress(moduleHandle, "IsWow64Process");
+                if (processAddress != IntPtr.Zero)
+                {
+                    bool result;
+                    if (IsWow64Process(GetCurrentProcess(), out result) && result)
+                        return true;
+                }
+            }
+            // The environment must be an x86 environment.
+            return false;
+        }
+
+        public static bool Is64BitProcess()
+        {
+            return IntPtr.Size == 8;
+        }
+
+        public static bool IsUpdateInstalled(string kbupdate)
+        {
+            WUApiLib.UpdateSession session = new UpdateSession();
+            IUpdateSearcher us = session.CreateUpdateSearcher();
+
+            var updatesCollection = session.QueryHistory(String.Empty, 0, us.GetTotalHistoryCount());
+            for (int i = 0; i < updatesCollection.Count; i++)
+            {
+                var blaat = updatesCollection[i];
+                //Console.WriteLine(updatesCollection[i].Title);
+                if (updatesCollection[i].Title.IndexOf(kbupdate, 0, StringComparison.CurrentCultureIgnoreCase) != -1)
+                {
+                    Console.WriteLine(updatesCollection[i].Title);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        [DllImport("ntdll.dll")]
+        private static extern int RtlGetVersion(out RTL_OSVERSIONINFOEX lpVersionInformation);
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct RTL_OSVERSIONINFOEX
+        {
+            internal uint dwOSVersionInfoSize;
+            internal uint dwMajorVersion;
+            internal uint dwMinorVersion;
+            internal uint dwBuildNumber;
+            internal uint dwPlatformId;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            internal string szCSDVersion;
+        }
+
+        public static decimal RtlGetVersion()
+        {
+            RTL_OSVERSIONINFOEX osvi = new RTL_OSVERSIONINFOEX();
+            osvi.dwOSVersionInfoSize = (uint)Marshal.SizeOf(osvi);
+            //const string version = "Microsoft Windows";
+            if (RtlGetVersion(out osvi) == 0)
+            {
+                string Version = osvi.dwMajorVersion + "." + osvi.dwMinorVersion;
+                return decimal.Parse(Version, CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                return -1;
+            }
+        }
+    }
 }
